@@ -1,0 +1,44 @@
+import time
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
+
+data = []
+while True:
+    soup = BeautifulSoup(driver.page_source, 'lxml')
+    boxes = soup.find_all('li', class_='reusable-search__result-container')
+    for i in boxes:
+        try:
+            link_element = i.find('a', class_='app-aware-link')
+            link = link_element.get('href') if link_element else None
+
+            name_span = i.find('span', {'dir': "ltr"})
+            name = name_span.find('span', {'aria-hidden': 'true'}).text if name_span else None
+
+            title_div = i.find('div', class_='entity-result__primary-subtitle t-14 t-black t-normal')
+            title = title_div.text if title_div else None
+
+            location_div = i.find('div', class_="entity-result__secondary-subtitle t-14 t-normal")
+            location = location_div.text if location_div else None
+
+            data.append({'link': link, 'name': name, 'title': title, 'location': location})
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            pass
+    
+    # Scroll to the bottom of the page
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+    time.sleep(10)
+    
+    # Click next page
+    try:
+        click_next = driver.find_element(By.XPATH, "/html/body/div[5]/div[3]/div[2]/div/div[1]/main/div/div/div[2]/div/div[2]/div/button[2]")
+        click_next.click()
+        time.sleep(3)
+    except Exception as e:
+        print("No more pages to scrape.")
+        break
+
+# Creating DataFrame
+df2 = pd.DataFrame(data)
